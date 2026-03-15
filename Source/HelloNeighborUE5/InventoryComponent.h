@@ -32,6 +32,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory Settings")
 	float DropDistance;
 
+	// The socket name on the player's skeletal mesh to attach the active item to
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory Settings")
+	FName HandSocketName;
+
 	// Array holding references to the picked-up items
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TArray<AActor*> InventoryItems;

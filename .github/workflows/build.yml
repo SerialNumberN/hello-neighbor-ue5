@@ -1,4 +1,18 @@
-name: Build Unreal Engine 5 Project (Windows)
+name: Build Unreal Engine 5 Project (Windows & Mac)
+
+# ==============================================================================
+# IMPORTANT PIPELINE NOTE
+# ==============================================================================
+# Unreal Engine 5 source code and dependencies require 100GB+ of storage.
+# Standard GitHub-hosted runners (like ubuntu-latest, windows-latest, macos-latest)
+# do NOT have enough disk space to install the engine or package a game, and will fail.
+#
+# To make this pipeline work, you MUST:
+# 1. Setup a self-hosted runner on a machine (e.g. your PC or Mac).
+# 2. Change the `runs-on` labels below from `windows-latest`/`macos-latest` to `self-hosted`.
+# 3. Ensure the `UE5_ROOT` environment variable is set on your runner machine
+#    pointing to your Engine installation directory.
+# ==============================================================================
 
 on:
   push:

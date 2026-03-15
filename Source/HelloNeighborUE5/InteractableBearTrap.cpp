@@ -83,15 +83,11 @@ void AInteractableBearTrap::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, 
 			// Pause the Neighbor's movement
 			NeighborCharacter->GetCharacterMovement()->MaxWalkSpeed = 0.0f;
 
-			// Pause the Behavior Tree if it has one
+			// Notify the AI Controller to set the Blackboard key so the Behavior Tree transitions cleanly
 			ANeighborAIController* AIController = Cast<ANeighborAIController>(NeighborCharacter->GetController());
 			if (AIController)
 			{
-				UBehaviorTreeComponent* BTComp = Cast<UBehaviorTreeComponent>(AIController->GetBrainComponent());
-				if (BTComp)
-				{
-					BTComp->PauseLogic(TEXT("Caught in Bear Trap"));
-				}
+				AIController->SetTrappedState(true);
 			}
 		}
 
@@ -113,11 +109,7 @@ void AInteractableBearTrap::ReleaseCaughtCharacter()
 			ANeighborAIController* AIController = Cast<ANeighborAIController>(NeighborCharacter->GetController());
 			if (AIController)
 			{
-				UBehaviorTreeComponent* BTComp = Cast<UBehaviorTreeComponent>(AIController->GetBrainComponent());
-				if (BTComp)
-				{
-					BTComp->ResumeLogic(TEXT("Released from Bear Trap"));
-				}
+				AIController->SetTrappedState(false);
 			}
 		}
 

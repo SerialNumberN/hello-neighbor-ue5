@@ -29,6 +29,9 @@ public:
 	// Update the Blackboard with the current state (enum)
 	void UpdateStateInBlackboard(ENeighborState NewState);
 
+	// Sets the bIsTrapped Blackboard key
+	void SetTrappedState(bool bIsTrapped);
+
 	// The Behavior Tree asset to run for this AI (Assign in Editor)
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	UBehaviorTree* BehaviorTree;
@@ -41,4 +44,5 @@ private:
 	const FName TargetLocationKeyName = "TargetLocation";
 	const FName TargetActorKeyName = "TargetActor";
 	const FName CurrentStateKeyName = "CurrentState";
+	const FName IsTrappedKeyName = "bIsTrapped";
 };

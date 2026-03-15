@@ -39,6 +39,12 @@ void AInteractableDoor::BeginPlay()
 	if (DoorHinge && DoorFrame && DoorPanel)
 	{
 		DoorHinge->SetConstrainedComponents(DoorFrame, NAME_None, DoorPanel, NAME_None);
+
+		// Configure explicit limits so it behaves like a hinge (no twisting or moving off the hinge)
+		DoorHinge->SetLinearXLimit(LCM_Locked, 0.0f);
+		DoorHinge->SetLinearYLimit(LCM_Locked, 0.0f);
+		DoorHinge->SetLinearZLimit(LCM_Locked, 0.0f);
+
 		UpdateConstraintLimits();
 	}
 }

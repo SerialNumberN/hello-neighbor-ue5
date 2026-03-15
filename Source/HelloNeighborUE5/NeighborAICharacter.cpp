@@ -17,6 +17,10 @@ ANeighborAICharacter::ANeighborAICharacter()
 	// Initialize the state
 	CurrentState = ENeighborState::Patrolling;
 
+	// Footsteps
+	FootstepInterval = 0.5f; // Play a footstep every half second while moving
+	LastFootstepTime = 0.0f;
+
 	// Create and configure the AI Perception Component
 	AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("PerceptionComponent"));
 
@@ -70,6 +74,17 @@ void ANeighborAICharacter::BeginPlay()
 void ANeighborAICharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	// Fallback footstep handling (ideally moved to Animation Notifies when you have animations)
+	if (FootstepSound && GetVelocity().SizeSquared() > 100.0f)
+	{
+		float CurrentTime = GetWorld()->GetTimeSeconds();
+		if (CurrentTime - LastFootstepTime >= FootstepInterval)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, FootstepSound, GetActorLocation());
+			LastFootstepTime = CurrentTime;
+		}
+	}
 }
 
 void ANeighborAICharacter::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)

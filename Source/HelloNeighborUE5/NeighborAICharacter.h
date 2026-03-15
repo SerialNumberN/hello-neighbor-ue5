@@ -59,6 +59,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
 	class USoundBase* AlertSound;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio Settings")
+	float FootstepInterval;
+
+private:
+	float LastFootstepTime;
+
+public:
 	// Function to change state and notify the AI Controller
 	UFUNCTION(BlueprintCallable, Category = "AI State")
 	void SetNeighborState(ENeighborState NewState);

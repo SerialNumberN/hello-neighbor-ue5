@@ -42,6 +42,12 @@ void ANeighborAIController::HandlePerceptionUpdate(AActor* Actor, FAIStimulus St
 {
 	if (!BlackboardComponent) return;
 
+	// Ignore perception entirely if the Neighbor is currently trapped
+	if (BlackboardComponent->GetValueAsBool(IsTrappedKeyName))
+	{
+		return;
+	}
+
 	// Example logic: if the AI successfully sensed something
 	if (Stimulus.WasSuccessfullySensed())
 	{
@@ -61,10 +67,23 @@ void ANeighborAIController::HandlePerceptionUpdate(AActor* Actor, FAIStimulus St
 				NeighborCharacter->SetNeighborState(ENeighborState::Chasing); // this triggers the alert sound and updates BB
 			}
 		}
+		else
+		{
+			// The AI saw or heard something else (like a thrown box!). Update the Blackboard
+			// so the Investigate Location Behavior Tree task can find it.
+			BlackboardComponent->SetValueAsVector(TargetLocationKeyName, Stimulus.ReceiverLocation);
+
+			// Only investigate if we aren't already chasing the player
+			ANeighborAICharacter* NeighborCharacter = Cast<ANeighborAICharacter>(GetPawn());
+			if (NeighborCharacter && NeighborCharacter->CurrentState != ENeighborState::Chasing)
+			{
+				NeighborCharacter->SetNeighborState(ENeighborState::Investigating);
+			}
+		}
 	}
 	else
 	{
-		// Senses lost (e.g., player out of sight). Go into Investigating or Searching mode.
+		// Senses lost (e.g., player out of sight). Go into Searching mode.
 		if (BlackboardComponent->GetValueAsObject(TargetActorKeyName) == Actor)
 		{
 			BlackboardComponent->ClearValue(TargetActorKeyName); // Forget the exact actor
@@ -81,5 +100,13 @@ void ANeighborAIController::UpdateStateInBlackboard(ENeighborState NewState)
 	{
 		// Cast the Enum to an integer so it can be stored in the Blackboard
 		BlackboardComponent->SetValueAsEnum(CurrentStateKeyName, (uint8)NewState);
+	}
+}
+
+void ANeighborAIController::SetTrappedState(bool bIsTrapped)
+{
+	if (BlackboardComponent)
+	{
+		BlackboardComponent->SetValueAsBool(IsTrappedKeyName, bIsTrapped);
 	}
 }
