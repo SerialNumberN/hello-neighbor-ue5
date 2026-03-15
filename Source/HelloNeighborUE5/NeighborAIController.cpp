@@ -111,7 +111,7 @@ void ANeighborAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus
 		{
 			// The AI saw or heard something else (like a thrown box!). Update the Blackboard
 			// so the Investigate Location Behavior Tree task can find it.
-			BlackboardComponent->SetValueAsVector(TargetLocationKeyName, Stimulus.ReceiverLocation);
+			BlackboardComponent->SetValueAsVector(TargetLocationKeyName, Stimulus.StimulusLocation);
 
 			// Only investigate if we aren't already chasing the player
 			ANeighborAICharacter* NeighborCharacter = Cast<ANeighborAICharacter>(GetPawn());
@@ -126,10 +126,13 @@ void ANeighborAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus
 		// Senses lost (e.g., player out of sight). Go into Searching mode.
 		if (BlackboardComponent->GetValueAsObject(TargetActorKeyName) == Actor)
 		{
-			BlackboardComponent->ClearValue(TargetActorKeyName); // Forget the exact actor
-			BlackboardComponent->SetValueAsVector(TargetLocationKeyName, Stimulus.ReceiverLocation); // Remember last known location
+			BlackboardComponent->SetValueAsVector(TargetLocationKeyName, Stimulus.StimulusLocation); // Remember last known location
 
-			UpdateStateInBlackboard(ENeighborState::Investigating);
+			ANeighborAICharacter* NeighborCharacter = Cast<ANeighborAICharacter>(GetPawn());
+			if (NeighborCharacter)
+			{
+				NeighborCharacter->SetNeighborState(ENeighborState::Investigating);
+			}
 		}
 	}
 }
