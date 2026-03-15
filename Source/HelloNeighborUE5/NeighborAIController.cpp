@@ -12,11 +12,9 @@ ANeighborAIController::ANeighborAIController()
 	// Create and configure the AI Perception Component
 	AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("PerceptionComponent"));
 
-	// Properly create the sense configs using CreateDefaultSubobject.
-	// Using NewObject in the constructor is dangerous and deprecated in UE5 for subobjects.
-	// This creates them correctly on the CDO.
-	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("Sight Config"));
-	HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("Hearing Config"));
+	// Create the sense configs using NewObject per the explicit instruction
+	SightConfig = NewObject<UAISenseConfig_Sight>(AIPerceptionComponent, TEXT("Sight Config"));
+	HearingConfig = NewObject<UAISenseConfig_Hearing>(AIPerceptionComponent, TEXT("Hearing Config"));
 
 	if (SightConfig)
 	{
