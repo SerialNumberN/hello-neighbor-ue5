@@ -9,6 +9,9 @@
 class UBehaviorTreeComponent;
 class UBlackboardComponent;
 class UBehaviorTree;
+class UAIPerceptionComponent;
+class UAISenseConfig_Sight;
+class UAISenseConfig_Hearing;
 
 UCLASS()
 class HELLONEIGHBORUE5_API ANeighborAIController : public AAIController
@@ -23,8 +26,21 @@ protected:
 	virtual void OnPossess(APawn* InPawn) override;
 
 public:
-	// Handle perception updates from the character (Sight, Hearing)
-	void HandlePerceptionUpdate(AActor* Actor, FAIStimulus Stimulus);
+	// Component to hold AI Senses (Sight, Hearing, etc.)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
+	UAIPerceptionComponent* AIPerceptionComponent;
+
+	// Sight Config
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
+	UAISenseConfig_Sight* SightConfig;
+
+	// Hearing Config
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
+	UAISenseConfig_Hearing* HearingConfig;
+
+	// Handle perception updates (Sight, Hearing)
+	UFUNCTION()
+	void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 
 	// Update the Blackboard with the current state (enum)
 	void UpdateStateInBlackboard(ENeighborState NewState);

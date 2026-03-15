@@ -3,16 +3,56 @@
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISenseConfig_Sight.h"
+#include "Perception/AISenseConfig_Hearing.h"
 
 ANeighborAIController::ANeighborAIController()
 {
-	// The BehaviorTree and Blackboard components are created automatically
-	// by the base AAIController when RunBehaviorTree is called.
+	// Create and configure the AI Perception Component
+	AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("PerceptionComponent"));
+
+	// Properly create the sense configs using CreateDefaultSubobject.
+	// Using NewObject in the constructor is dangerous and deprecated in UE5 for subobjects.
+	// This creates them correctly on the CDO.
+	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("Sight Config"));
+	HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("Hearing Config"));
+
+	if (SightConfig)
+	{
+		SightConfig->SightRadius = 1500.0f;
+		SightConfig->LoseSightRadius = 2000.0f;
+		SightConfig->PeripheralVisionAngleDegrees = 90.0f;
+		SightConfig->SetMaxAge(5.0f);
+		SightConfig->AutoSuccessRangeFromLastSeenLocation = -1.0f;
+
+		SightConfig->DetectionByAffiliation.bDetectEnemies = true;
+		SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
+		SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+		AIPerceptionComponent->ConfigureSense(*SightConfig);
+		AIPerceptionComponent->SetDominantSense(SightConfig->GetSenseID());
+	}
+
+	if (HearingConfig)
+	{
+		HearingConfig->HearingRange = 3000.0f;
+		HearingConfig->SetMaxAge(3.0f);
+
+		HearingConfig->DetectionByAffiliation.bDetectEnemies = true;
+		HearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
+		HearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
+		AIPerceptionComponent->ConfigureSense(*HearingConfig);
+	}
 }
 
 void ANeighborAIController::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (AIPerceptionComponent)
+	{
+		AIPerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ANeighborAIController::OnTargetPerceptionUpdated);
+	}
 }
 
 void ANeighborAIController::OnPossess(APawn* InPawn)
@@ -38,7 +78,7 @@ void ANeighborAIController::OnPossess(APawn* InPawn)
 	}
 }
 
-void ANeighborAIController::HandlePerceptionUpdate(AActor* Actor, FAIStimulus Stimulus)
+void ANeighborAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
 	if (!BlackboardComponent) return;
 
