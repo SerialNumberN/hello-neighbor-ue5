@@ -3,6 +3,16 @@
 	"EngineAssociation": "5.3",
 	"Category": "",
 	"Description": "Hello Neighbor UE5 Conversion Project",
+	"Modules": [
+		{
+			"Name": "HelloNeighborUE5",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
+		}
+	],
 	"Plugins": [
 		{
 			"Name": "ModelingToolsEditorMode",
