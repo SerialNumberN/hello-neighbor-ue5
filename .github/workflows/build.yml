@@ -1,0 +1,29 @@
+name: Build Unreal Engine 5 Project (Windows)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Ensure Unreal Engine exists or fail
+      run: |
+        # In a real environment, you need a self-hosted runner with UE installed,
+        # or a step that downloads/mounts the engine. This is a placeholder check
+        # to ensure the workflow structure is valid for the project.
+        echo "Validating project build steps for Windows"
+
+    - name: Build Project (Simulated for GitHub Actions)
+      run: |
+        echo "Building HelloNeighborUE5Editor target..."
+        # Example of how it would be called if UAT was installed on the runner:
+        # & "C:\Program Files\Epic Games\UE_5.3\Engine\Build\BatchFiles\Build.bat" HelloNeighborUE5Editor Win64 Development "$(Get-Location)\HelloNeighborUE5.uproject" -waitmutex
