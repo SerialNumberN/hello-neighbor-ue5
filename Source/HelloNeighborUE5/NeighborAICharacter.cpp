@@ -5,6 +5,9 @@
 #include "BehaviorTree/BehaviorTree.h"
 #include "NeighborAIController.h"
 #include "Kismet/GameplayStatics.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 ANeighborAICharacter::ANeighborAICharacter()
@@ -55,6 +58,12 @@ void ANeighborAICharacter::BeginPlay()
 		// Bind the perception update function
 		AIPerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ANeighborAICharacter::OnTargetPerceptionUpdated);
 	}
+
+	// Bind the overlap event to the character's collision capsule for the Catch Mechanic
+	if (GetCapsuleComponent())
+	{
+		GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &ANeighborAICharacter::OnOverlapBegin);
+	}
 }
 
 // Called every frame
@@ -78,6 +87,15 @@ void ANeighborAICharacter::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus 
 
 void ANeighborAICharacter::SetNeighborState(ENeighborState NewState)
 {
+	if (CurrentState != ENeighborState::Chasing && NewState == ENeighborState::Chasing)
+	{
+		// Just got alerted to the player
+		if (AlertSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, AlertSound, GetActorLocation());
+		}
+	}
+
 	CurrentState = NewState;
 
 	// Notify the controller that the state changed so it can update the Blackboard
@@ -85,5 +103,27 @@ void ANeighborAICharacter::SetNeighborState(ENeighborState NewState)
 	if (AIController)
 	{
 		AIController->UpdateStateInBlackboard(CurrentState);
+	}
+}
+
+void ANeighborAICharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	// Ensure we are chasing and hit the player
+	if (CurrentState == ENeighborState::Chasing && OtherActor && OtherActor != this)
+	{
+		// Assuming the player character possesses the first player controller
+		APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+
+		if (OtherActor == PlayerPawn)
+		{
+			// We caught the player!
+			UE_LOG(LogTemp, Warning, TEXT("Neighbor caught the player!"));
+
+			// Optional: Freeze the Neighbor immediately so they don't keep running past
+			GetCharacterMovement()->StopMovementImmediately();
+
+			// Trigger the blueprint implementable event
+			OnPlayerCaught();
+		}
 	}
 }

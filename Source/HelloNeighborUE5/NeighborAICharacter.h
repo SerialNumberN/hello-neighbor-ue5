@@ -52,7 +52,22 @@ public:
 	UFUNCTION()
 	void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 
+	// Sounds
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	class USoundBase* FootstepSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	class USoundBase* AlertSound;
+
 	// Function to change state and notify the AI Controller
 	UFUNCTION(BlueprintCallable, Category = "AI State")
 	void SetNeighborState(ENeighborState NewState);
+
+	// The Catch Mechanic
+	UFUNCTION()
+	void OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	// Blueprint Implementable Event to handle the Game Over screen or reset logic
+	UFUNCTION(BlueprintImplementableEvent, Category = "Game Events")
+	void OnPlayerCaught();
 };

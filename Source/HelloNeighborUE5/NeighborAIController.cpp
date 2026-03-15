@@ -53,7 +53,13 @@ void ANeighborAIController::HandlePerceptionUpdate(AActor* Actor, FAIStimulus St
 			BlackboardComponent->SetValueAsObject(TargetActorKeyName, Actor);
 			BlackboardComponent->SetValueAsVector(TargetLocationKeyName, Actor->GetActorLocation());
 
-			UpdateStateInBlackboard(ENeighborState::Chasing);
+			// We check if the state is already chasing so we don't spam the alert sound
+			// every time the perception ticks while chasing.
+			ANeighborAICharacter* NeighborCharacter = Cast<ANeighborAICharacter>(GetPawn());
+			if (NeighborCharacter && NeighborCharacter->CurrentState != ENeighborState::Chasing)
+			{
+				NeighborCharacter->SetNeighborState(ENeighborState::Chasing); // this triggers the alert sound and updates BB
+			}
 		}
 	}
 	else

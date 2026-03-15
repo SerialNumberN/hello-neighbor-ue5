@@ -81,6 +81,12 @@ void AInteractableWindow::OnWindowHit(UPrimitiveComponent* HitComponent, AActor*
 		// Hide the solid glass mesh (Blueprints will typically spawn shattered pieces here)
 		WindowGlass->SetVisibility(false);
 
+		// Play sound
+		if (ShatterSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, ShatterSound, GetActorLocation());
+		}
+
 		// Trigger Blueprint event for visual/audio effects (glass shattering, spawning chunks)
 		OnWindowShatter();
 	}

@@ -2,6 +2,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "PhysicsEngine/PhysicsConstraintComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
 
 // Sets default values
 AInteractableDoor::AInteractableDoor()
@@ -81,6 +83,12 @@ void AInteractableDoor::PushDoor(FVector PushDirection, float ForceMagnitude)
 	{
 		// Apply an impulse to the door panel to swing it
 		DoorPanel->AddImpulseAtLocation(PushDirection * ForceMagnitude, DoorPanel->GetComponentLocation());
+
+		// Play slam sound if the force is high
+		if (ForceMagnitude > SlamForce * 0.5f && SlamSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, SlamSound, DoorPanel->GetComponentLocation());
+		}
 	}
 }
 
@@ -96,10 +104,21 @@ void AInteractableDoor::OnInteract_Implementation(AActor* InteractingActor)
 
 		// Apply a moderate push (like pushing a door slowly)
 		PushDoor(Direction, SlamForce * 0.2f);
+
+		// Play regular open sound
+		if (OpenSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, OpenSound, DoorPanel->GetComponentLocation());
+		}
 	}
 	else if (bIsLocked)
 	{
-		// Door is locked! Could trigger a rattle sound effect or widget here in Blueprints
+		// Play locked rattle sound
+		if (LockedRattleSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, LockedRattleSound, DoorPanel->GetComponentLocation());
+		}
+
 		UE_LOG(LogTemp, Warning, TEXT("The door is locked!"));
 	}
 }

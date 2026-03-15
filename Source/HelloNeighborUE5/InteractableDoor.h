@@ -50,6 +50,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door Settings")
 	float SlamForce;
 
+	// Sounds
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	class USoundBase* OpenSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	class USoundBase* SlamSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	class USoundBase* LockedRattleSound;
+
 	// Blueprint Callable function to lock/unlock the door dynamically
 	UFUNCTION(BlueprintCallable, Category = "Door Settings")
 	void SetDoorLocked(bool bNewLockedState);

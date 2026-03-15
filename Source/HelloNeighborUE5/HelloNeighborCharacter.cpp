@@ -13,6 +13,8 @@ DEFINE_LOG_CATEGORY_STATIC(LogTemplateCharacter, Log, All);
 
 AHelloNeighborCharacter::AHelloNeighborCharacter()
 {
+	PrimaryActorTick.bCanEverTick = true; // Ensure character ticks
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
 
@@ -24,6 +26,12 @@ AHelloNeighborCharacter::AHelloNeighborCharacter()
 
 	WalkSpeed = 400.0f;
 	SprintSpeed = 800.0f;
+
+	MaxStamina = 100.0f;
+	CurrentStamina = MaxStamina;
+	StaminaDrainRate = 15.0f;
+	StaminaRegenRate = 10.0f;
+	bIsSprinting = false;
 
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
@@ -111,12 +119,50 @@ void AHelloNeighborCharacter::StopCrouch()
 	UnCrouch();
 }
 
+void AHelloNeighborCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	// Handle Stamina Drain and Regeneration
+	if (bIsSprinting)
+	{
+		// Only drain stamina if actually moving
+		if (GetVelocity().SizeSquared() > 0.0f)
+		{
+			CurrentStamina -= StaminaDrainRate * DeltaTime;
+
+			if (CurrentStamina <= 0.0f)
+			{
+				CurrentStamina = 0.0f;
+				StopSprint(); // Force stop sprinting when out of stamina
+			}
+		}
+	}
+	else
+	{
+		// Regenerate stamina when not sprinting
+		if (CurrentStamina < MaxStamina)
+		{
+			CurrentStamina += StaminaRegenRate * DeltaTime;
+			if (CurrentStamina > MaxStamina)
+			{
+				CurrentStamina = MaxStamina;
+			}
+		}
+	}
+}
+
 void AHelloNeighborCharacter::StartSprint()
 {
-	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+	if (CurrentStamina > 0.0f && !bIsCrouched)
+	{
+		bIsSprinting = true;
+		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+	}
 }
 
 void AHelloNeighborCharacter::StopSprint()
 {
+	bIsSprinting = false;
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 }

@@ -60,6 +60,26 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Settings")
 	float SprintSpeed;
 
+	// Stamina System
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina Settings")
+	float MaxStamina;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stamina State")
+	float CurrentStamina;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina Settings")
+	float StaminaDrainRate;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina Settings")
+	float StaminaRegenRate;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stamina State")
+	bool bIsSprinting;
+
+public:
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+
 protected:
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);

@@ -44,6 +44,10 @@ public:
 	UFUNCTION()
 	void OnWindowHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
+	// Sounds
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	class USoundBase* ShatterSound;
+
 	// Blueprint Implementable Event to handle visual effects (particles, sound, replacing mesh with broken pieces)
 	UFUNCTION(BlueprintImplementableEvent, Category = "Window Events")
 	void OnWindowShatter();
