@@ -8,6 +8,9 @@
 #include "InputActionValue.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/LocalPlayer.h"
+#include "InteractionComponent.h"
+#include "InventoryComponent.h"
+#include "PhysicsEngine/PhysicsHandleComponent.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogTemplateCharacter, Log, All);
 
@@ -24,6 +27,12 @@ AHelloNeighborCharacter::AHelloNeighborCharacter()
 	FirstPersonCameraComponent->SetRelativeLocation(FVector(-10.f, 0.f, 60.f)); // Position the camera
 	FirstPersonCameraComponent->bUsePawnControlRotation = true;
 
+	// Note: InteractionComponent internally requires a PhysicsHandle attached to the actor to work
+	UPhysicsHandleComponent* PhysicsHandle = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandle"));
+
+	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
+
 	WalkSpeed = 400.0f;
 	SprintSpeed = 800.0f;
 
@@ -33,7 +42,6 @@ AHelloNeighborCharacter::AHelloNeighborCharacter()
 	StaminaRegenRate = 10.0f;
 	bIsSprinting = false;
 
-	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 }
 
@@ -41,6 +49,9 @@ void AHelloNeighborCharacter::BeginPlay()
 {
 	// Call the base class
 	Super::BeginPlay();
+
+	// Ensure Blueprint-modified WalkSpeed takes effect at runtime
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 
 	// Add Input Mapping Context
 	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
@@ -124,12 +135,15 @@ void AHelloNeighborCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	// Handle Stamina Drain and Regeneration
+	bool bStaminaChanged = false;
+
 	if (bIsSprinting)
 	{
-		// Only drain stamina if actually moving
-		if (GetVelocity().SizeSquared() > 0.0f)
+		// Only drain stamina if actually moving (velocity > ~10 units/sec) to avoid physics jitter draining stamina while standing still
+		if (GetVelocity().SizeSquared() > 100.0f)
 		{
 			CurrentStamina -= StaminaDrainRate * DeltaTime;
+			bStaminaChanged = true;
 
 			if (CurrentStamina <= 0.0f)
 			{
@@ -144,11 +158,19 @@ void AHelloNeighborCharacter::Tick(float DeltaTime)
 		if (CurrentStamina < MaxStamina)
 		{
 			CurrentStamina += StaminaRegenRate * DeltaTime;
+			bStaminaChanged = true;
+
 			if (CurrentStamina > MaxStamina)
 			{
 				CurrentStamina = MaxStamina;
 			}
 		}
+	}
+
+	// Trigger Blueprint HUD event if it changed
+	if (bStaminaChanged)
+	{
+		OnStaminaChanged(CurrentStamina, MaxStamina);
 	}
 }
 

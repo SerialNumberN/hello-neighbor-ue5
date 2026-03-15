@@ -1,11 +1,9 @@
 #include "NeighborAICharacter.h"
-#include "Perception/AIPerceptionComponent.h"
-#include "Perception/AISenseConfig_Sight.h"
-#include "Perception/AISenseConfig_Hearing.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "NeighborAIController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -17,35 +15,15 @@ ANeighborAICharacter::ANeighborAICharacter()
 	// Initialize the state
 	CurrentState = ENeighborState::Patrolling;
 
-	// Create and configure the AI Perception Component
-	AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("PerceptionComponent"));
+	// Footsteps
+	FootstepInterval = 0.5f; // Play a footstep every half second while moving
+	LastFootstepTime = 0.0f;
 
-	// Configure Sight
-	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("Sight Config"));
-	SightConfig->SightRadius = 1500.0f;
-	SightConfig->LoseSightRadius = 2000.0f;
-	SightConfig->PeripheralVisionAngleDegrees = 90.0f;
-	SightConfig->SetMaxAge(5.0f);
-	SightConfig->AutoSuccessRangeFromLastSeenLocation = -1.0f;
-
-	// Detect everything (enemies, neutrals, friendlies)
-	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
-	SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
-	SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
-
-	// Configure Hearing
-	HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("Hearing Config"));
-	HearingConfig->HearingRange = 3000.0f;
-	HearingConfig->SetMaxAge(3.0f);
-
-	HearingConfig->DetectionByAffiliation.bDetectEnemies = true;
-	HearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
-	HearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
-
-	// Add the senses to the perception component
-	AIPerceptionComponent->ConfigureSense(*SightConfig);
-	AIPerceptionComponent->ConfigureSense(*HearingConfig);
-	AIPerceptionComponent->SetDominantSense(SightConfig->GetSenseID());
+	// Catch Mechanic Sphere
+	CatchRadius = CreateDefaultSubobject<USphereComponent>(TEXT("CatchRadius"));
+	CatchRadius->SetupAttachment(RootComponent);
+	CatchRadius->InitSphereRadius(100.0f); // Default catch radius
+	CatchRadius->SetCollisionProfileName(TEXT("Trigger"));
 }
 
 // Called when the game starts or when spawned
@@ -53,16 +31,10 @@ void ANeighborAICharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (AIPerceptionComponent)
+	// Bind the overlap event to the CatchRadius sphere
+	if (CatchRadius)
 	{
-		// Bind the perception update function
-		AIPerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ANeighborAICharacter::OnTargetPerceptionUpdated);
-	}
-
-	// Bind the overlap event to the character's collision capsule for the Catch Mechanic
-	if (GetCapsuleComponent())
-	{
-		GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &ANeighborAICharacter::OnOverlapBegin);
+		CatchRadius->OnComponentBeginOverlap.AddDynamic(this, &ANeighborAICharacter::OnOverlapBegin);
 	}
 }
 
@@ -70,29 +42,35 @@ void ANeighborAICharacter::BeginPlay()
 void ANeighborAICharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-}
 
-void ANeighborAICharacter::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
-{
-	if (!Actor || Actor == this) return;
-
-	// Get the AI Controller controlling this character
-	ANeighborAIController* AIController = Cast<ANeighborAIController>(GetController());
-	if (AIController)
+	// Fallback footstep handling (ideally moved to Animation Notifies when you have animations)
+	if (FootstepSound && GetVelocity().SizeSquared() > 100.0f)
 	{
-		// Let the Controller handle the logic (updating Blackboard, changing state, etc.)
-		AIController->HandlePerceptionUpdate(Actor, Stimulus);
+		float CurrentTime = GetWorld()->GetTimeSeconds();
+		if (CurrentTime - LastFootstepTime >= FootstepInterval)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, FootstepSound, GetActorLocation());
+			LastFootstepTime = CurrentTime;
+		}
 	}
 }
 
 void ANeighborAICharacter::SetNeighborState(ENeighborState NewState)
 {
-	if (CurrentState != ENeighborState::Chasing && NewState == ENeighborState::Chasing)
+	if (CurrentState != NewState)
 	{
-		// Just got alerted to the player
-		if (AlertSound)
+		// Handle State Transition Audio
+		if (NewState == ENeighborState::Chasing && AlertSound)
 		{
 			UGameplayStatics::PlaySoundAtLocation(this, AlertSound, GetActorLocation());
+		}
+		else if (NewState == ENeighborState::Investigating && InvestigateSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, InvestigateSound, GetActorLocation());
+		}
+		else if (NewState == ENeighborState::Patrolling && PatrolSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, PatrolSound, GetActorLocation());
 		}
 	}
 

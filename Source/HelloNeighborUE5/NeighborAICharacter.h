@@ -32,25 +32,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Component to hold AI Senses (Sight, Hearing, etc.)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
-	class UAIPerceptionComponent* AIPerceptionComponent;
-
-	// Sight Config
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
-	class UAISenseConfig_Sight* SightConfig;
-
-	// Hearing Config
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
-	class UAISenseConfig_Hearing* HearingConfig;
-
 	// Current State of the Neighbor (drives the Behavior Tree)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI State")
 	ENeighborState CurrentState;
-
-	// Function to be called when the perception system detects a new stimulus
-	UFUNCTION()
-	void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 
 	// Sounds
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
@@ -59,11 +43,27 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
 	class USoundBase* AlertSound;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	class USoundBase* PatrolSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	class USoundBase* InvestigateSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio Settings")
+	float FootstepInterval;
+
+private:
+	float LastFootstepTime;
+
+public:
 	// Function to change state and notify the AI Controller
 	UFUNCTION(BlueprintCallable, Category = "AI State")
 	void SetNeighborState(ENeighborState NewState);
 
 	// The Catch Mechanic
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Catch Mechanic")
+	class USphereComponent* CatchRadius;
+
 	UFUNCTION()
 	void OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 

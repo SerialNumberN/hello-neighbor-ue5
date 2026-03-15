@@ -1,4 +1,18 @@
-name: Build Unreal Engine 5 Project (Windows)
+name: Build Unreal Engine 5 Project (Windows & Mac)
+
+# ==============================================================================
+# IMPORTANT PIPELINE NOTE
+# ==============================================================================
+# Unreal Engine 5 source code and dependencies require 100GB+ of storage.
+# Standard GitHub-hosted runners (like ubuntu-latest, windows-latest, macos-latest)
+# do NOT have enough disk space to install the engine or package a game, and will fail.
+#
+# To make this pipeline work, you MUST:
+# 1. Setup a self-hosted runner on a machine (e.g. your PC or Mac).
+# 2. Change the `runs-on` labels below from `windows-latest`/`macos-latest` to `self-hosted`.
+# 3. Ensure the `UE5_ROOT` environment variable is set on your runner machine
+#    pointing to your Engine installation directory.
+# ==============================================================================
 
 on:
   push:
@@ -27,3 +41,35 @@ jobs:
         echo "Building HelloNeighborUE5Editor target..."
         # Example of how it would be called if UAT was installed on the runner:
         # & "C:\Program Files\Epic Games\UE_5.3\Engine\Build\BatchFiles\Build.bat" HelloNeighborUE5Editor Win64 Development "$(Get-Location)\HelloNeighborUE5.uproject" -waitmutex
+
+  build-mac:
+    # IMPORTANT: Compiling Unreal Engine 5 games requires significantly more storage and time
+    # than standard GitHub-hosted runners provide (e.g., macos-latest only has ~14GB free).
+    # To actually run this job successfully, you must configure a self-hosted runner
+    # on your Mac (or a dedicated build machine) that already has UE5 installed.
+    # Change 'macos-latest' to 'self-hosted' when you have that set up.
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Package Game for macOS (Requires Self-Hosted Runner)
+      run: |
+        echo "Running macOS package build..."
+        # This is the exact command you need to run Unreal Automation Tool (UAT) to package a playable game.
+        # It assumes Unreal Engine 5.3 is installed in the default Shared location on your Mac.
+        # Note: This will intentionally fail on a standard GitHub 'macos-latest' runner because the Engine is missing.
+
+        /Users/Shared/Epic\ Games/UE_5.3/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun \
+        -project="$GITHUB_WORKSPACE/HelloNeighborUE5.uproject" \
+        -noP4 -platform=Mac -clientconfig=Development -serverconfig=Development \
+        -cook -allmaps -build -stage -pak -archive \
+        -archivedirectory="$GITHUB_WORKSPACE/PackagedBuild"
+
+    - name: Upload Packaged Mac Build
+      uses: actions/upload-artifact@v4
+      with:
+        name: HelloNeighbor-Mac-Build
+        path: ${{ github.workspace }}/PackagedBuild/Mac/
+        retention-days: 7

@@ -51,7 +51,11 @@ void UBTTask_InvestigateLocation::OnWaitFinished(UBehaviorTreeComponent* OwnerCo
 	{
 		// If we reached here without the perception interrupting and changing the state to Chasing,
 		// it means the investigation yielded nothing. We switch the state back to Patrolling.
-		AIController->UpdateStateInBlackboard(ENeighborState::Patrolling);
+		ANeighborAICharacter* NeighborCharacter = Cast<ANeighborAICharacter>(AIController->GetPawn());
+		if (NeighborCharacter)
+		{
+			NeighborCharacter->SetNeighborState(ENeighborState::Patrolling);
+		}
 
 		// Clear the target location from the blackboard since we finished investigating it
 		OwnerComp->GetBlackboardComponent()->ClearValue(GetSelectedBlackboardKey());

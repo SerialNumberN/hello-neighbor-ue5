@@ -3,16 +3,54 @@
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISenseConfig_Sight.h"
+#include "Perception/AISenseConfig_Hearing.h"
 
 ANeighborAIController::ANeighborAIController()
 {
-	// The BehaviorTree and Blackboard components are created automatically
-	// by the base AAIController when RunBehaviorTree is called.
+	// Create and configure the AI Perception Component
+	AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("PerceptionComponent"));
+
+	// Create the sense configs using NewObject per the explicit instruction
+	SightConfig = NewObject<UAISenseConfig_Sight>(AIPerceptionComponent, TEXT("Sight Config"));
+	HearingConfig = NewObject<UAISenseConfig_Hearing>(AIPerceptionComponent, TEXT("Hearing Config"));
+
+	if (SightConfig)
+	{
+		SightConfig->SightRadius = 1500.0f;
+		SightConfig->LoseSightRadius = 2000.0f;
+		SightConfig->PeripheralVisionAngleDegrees = 90.0f;
+		SightConfig->SetMaxAge(5.0f);
+		SightConfig->AutoSuccessRangeFromLastSeenLocation = -1.0f;
+
+		SightConfig->DetectionByAffiliation.bDetectEnemies = true;
+		SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
+		SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+		AIPerceptionComponent->ConfigureSense(*SightConfig);
+		AIPerceptionComponent->SetDominantSense(SightConfig->GetSenseID());
+	}
+
+	if (HearingConfig)
+	{
+		HearingConfig->HearingRange = 3000.0f;
+		HearingConfig->SetMaxAge(3.0f);
+
+		HearingConfig->DetectionByAffiliation.bDetectEnemies = true;
+		HearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
+		HearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
+		AIPerceptionComponent->ConfigureSense(*HearingConfig);
+	}
 }
 
 void ANeighborAIController::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (AIPerceptionComponent)
+	{
+		AIPerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ANeighborAIController::OnTargetPerceptionUpdated);
+	}
 }
 
 void ANeighborAIController::OnPossess(APawn* InPawn)
@@ -38,9 +76,15 @@ void ANeighborAIController::OnPossess(APawn* InPawn)
 	}
 }
 
-void ANeighborAIController::HandlePerceptionUpdate(AActor* Actor, FAIStimulus Stimulus)
+void ANeighborAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
 	if (!BlackboardComponent) return;
+
+	// Ignore perception entirely if the Neighbor is currently trapped
+	if (BlackboardComponent->GetValueAsBool(IsTrappedKeyName))
+	{
+		return;
+	}
 
 	// Example logic: if the AI successfully sensed something
 	if (Stimulus.WasSuccessfullySensed())
@@ -61,16 +105,32 @@ void ANeighborAIController::HandlePerceptionUpdate(AActor* Actor, FAIStimulus St
 				NeighborCharacter->SetNeighborState(ENeighborState::Chasing); // this triggers the alert sound and updates BB
 			}
 		}
+		else
+		{
+			// The AI saw or heard something else (like a thrown box!). Update the Blackboard
+			// so the Investigate Location Behavior Tree task can find it.
+			BlackboardComponent->SetValueAsVector(TargetLocationKeyName, Stimulus.StimulusLocation);
+
+			// Only investigate if we aren't already chasing the player
+			ANeighborAICharacter* NeighborCharacter = Cast<ANeighborAICharacter>(GetPawn());
+			if (NeighborCharacter && NeighborCharacter->CurrentState != ENeighborState::Chasing)
+			{
+				NeighborCharacter->SetNeighborState(ENeighborState::Investigating);
+			}
+		}
 	}
 	else
 	{
-		// Senses lost (e.g., player out of sight). Go into Investigating or Searching mode.
+		// Senses lost (e.g., player out of sight). Go into Searching mode.
 		if (BlackboardComponent->GetValueAsObject(TargetActorKeyName) == Actor)
 		{
-			BlackboardComponent->ClearValue(TargetActorKeyName); // Forget the exact actor
-			BlackboardComponent->SetValueAsVector(TargetLocationKeyName, Stimulus.ReceiverLocation); // Remember last known location
+			BlackboardComponent->SetValueAsVector(TargetLocationKeyName, Stimulus.StimulusLocation); // Remember last known location
 
-			UpdateStateInBlackboard(ENeighborState::Investigating);
+			ANeighborAICharacter* NeighborCharacter = Cast<ANeighborAICharacter>(GetPawn());
+			if (NeighborCharacter)
+			{
+				NeighborCharacter->SetNeighborState(ENeighborState::Investigating);
+			}
 		}
 	}
 }
@@ -81,5 +141,13 @@ void ANeighborAIController::UpdateStateInBlackboard(ENeighborState NewState)
 	{
 		// Cast the Enum to an integer so it can be stored in the Blackboard
 		BlackboardComponent->SetValueAsEnum(CurrentStateKeyName, (uint8)NewState);
+	}
+}
+
+void ANeighborAIController::SetTrappedState(bool bIsTrapped)
+{
+	if (BlackboardComponent)
+	{
+		BlackboardComponent->SetValueAsBool(IsTrappedKeyName, bIsTrapped);
 	}
 }

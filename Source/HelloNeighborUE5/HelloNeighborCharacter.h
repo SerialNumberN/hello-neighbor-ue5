@@ -11,6 +11,8 @@ class USceneComponent;
 class UCameraComponent;
 class UAnimMontage;
 class USoundBase;
+class UInteractionComponent;
+class UInventoryComponent;
 
 UCLASS(config=Game)
 class AHelloNeighborCharacter : public ACharacter
@@ -20,6 +22,13 @@ class AHelloNeighborCharacter : public ACharacter
 	/** First person camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FirstPersonCameraComponent;
+
+	// Custom Components
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UInteractionComponent* InteractionComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UInventoryComponent* InventoryComponent;
 
 	/** MappingContext */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
@@ -76,6 +85,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stamina State")
 	bool bIsSprinting;
 
+	// Event fired when stamina changes, useful for updating UI/HUD
+	UFUNCTION(BlueprintImplementableEvent, Category = "Stamina State")
+	void OnStaminaChanged(float Current, float Max);
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -90,7 +103,10 @@ protected:
 	void StartCrouch();
 	void StopCrouch();
 
+	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void StartSprint();
+
+	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void StopSprint();
 
 protected:

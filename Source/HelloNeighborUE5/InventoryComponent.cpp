@@ -1,6 +1,8 @@
 #include "InventoryComponent.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/Character.h"
 #include "Components/PrimitiveComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Camera/CameraComponent.h"
 
 // Sets default values for this component's properties
@@ -10,6 +12,7 @@ UInventoryComponent::UInventoryComponent()
 
 	MaxInventorySlots = 4; // Default like Hello Neighbor
 	DropDistance = 150.0f;
+	HandSocketName = TEXT("hand_r"); // Default standard UE socket name
 	ActiveItemIndex = 0;
 }
 
@@ -68,8 +71,8 @@ bool UInventoryComponent::PickupItem(AActor* ItemToPickup)
 	// Deactivate it (hide it, stop physics, stop collision)
 	SetItemActiveState(ItemToPickup, false);
 
-	// Optionally, attach it to the player so it moves with them (hidden in pocket)
-	ItemToPickup->AttachToActor(GetOwner(), FAttachmentTransformRules::KeepRelativeTransform);
+	// Ensure we only have one item active
+	CycleInventory(true); // Re-run cycle logic to update visuals
 
 	return true;
 }
@@ -82,10 +85,12 @@ void UInventoryComponent::DropActiveItem()
 	}
 
 	AActor* ItemToDrop = InventoryItems[ActiveItemIndex];
-	if (!ItemToDrop) return;
 
-	// Remove it from the inventory array
+	// Remove it from the inventory array FIRST to prevent infinite loops elsewhere
+	// even if the actor itself became invalid while in our pocket
 	InventoryItems.RemoveAt(ActiveItemIndex);
+
+	if (!ItemToDrop) return;
 
 	// Detach it from the player
 	ItemToDrop->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
@@ -112,6 +117,8 @@ void UInventoryComponent::DropActiveItem()
 	{
 		ActiveItemIndex = InventoryItems.Num() - 1;
 	}
+
+	CycleInventory(true); // Update visuals for the next item
 }
 
 void UInventoryComponent::CycleInventory(bool bNextItem)
@@ -132,6 +139,34 @@ void UInventoryComponent::CycleInventory(bool bNextItem)
 		if (ActiveItemIndex < 0)
 		{
 			ActiveItemIndex = InventoryItems.Num() - 1; // Wrap around to the end
+		}
+	}
+
+	// Update visuals
+	for (int32 i = 0; i < InventoryItems.Num(); ++i)
+	{
+		AActor* Item = InventoryItems[i];
+		if (!Item) continue;
+
+		if (i == ActiveItemIndex)
+		{
+			// Make active item visible and attach to hand
+			Item->SetActorHiddenInGame(false);
+
+			ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+			if (OwnerCharacter && OwnerCharacter->GetMesh())
+			{
+				Item->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, HandSocketName);
+			}
+			else
+			{
+				Item->AttachToActor(GetOwner(), FAttachmentTransformRules::KeepRelativeTransform);
+			}
+		}
+		else
+		{
+			// Hide inactive items
+			Item->SetActorHiddenInGame(true);
 		}
 	}
 
