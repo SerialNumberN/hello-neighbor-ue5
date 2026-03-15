@@ -3,6 +3,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/Actor.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Interactable.h"
 
 // Sets default values for this component's properties
 UInteractionComponent::UInteractionComponent()
@@ -89,8 +90,17 @@ void UInteractionComponent::Interact()
 	if (bHit && HitResult.GetComponent())
 	{
 		UPrimitiveComponent* ComponentToGrab = HitResult.GetComponent();
+		AActor* HitActor = HitResult.GetActor();
 
-		// Check if it's simulating physics and can be moved
+		// First, check if the hit actor implements the Interactable Interface (like a Door)
+		if (HitActor && HitActor->Implements<UInteractable>())
+		{
+			// Call the interface function (this allows Blueprint and C++ implementations)
+			IInteractable::Execute_OnInteract(HitActor, GetOwner());
+			return; // Don't try to grab it if it's an interactable object like a door switch
+		}
+
+		// Otherwise, check if it's a generic simulating physics object that can be picked up
 		if (ComponentToGrab->IsSimulatingPhysics())
 		{
 			// Wake up the rigid body if it was asleep
