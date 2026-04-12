@@ -21,9 +21,6 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
 	// The maximum number of items the player can hold in their inventory
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory Settings")
 	int32 MaxInventorySlots;

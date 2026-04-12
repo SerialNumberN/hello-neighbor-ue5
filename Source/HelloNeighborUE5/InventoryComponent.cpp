@@ -22,12 +22,6 @@ void UInventoryComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
-// Called every frame
-void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-}
-
 void UInventoryComponent::SetItemActiveState(AActor* Item, bool bIsActive)
 {
 	if (!Item) return;

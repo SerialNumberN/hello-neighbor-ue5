@@ -39,12 +39,6 @@ void AInteractableWindow::BeginPlay()
 	}
 }
 
-// Called every frame
-void AInteractableWindow::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
-
 void AInteractableWindow::OnWindowHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	if (bIsBroken) return; // Already broken

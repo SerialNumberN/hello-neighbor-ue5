@@ -22,9 +22,6 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
 	// Implementation of the IInteractable interface
 	virtual void OnInteract_Implementation(AActor* InteractingActor) override;
 

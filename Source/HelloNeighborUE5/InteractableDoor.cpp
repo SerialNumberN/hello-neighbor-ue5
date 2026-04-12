@@ -8,7 +8,7 @@
 // Sets default values
 AInteractableDoor::AInteractableDoor()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	// Setup Door Frame (Root)
 	DoorFrame = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorFrame"));
@@ -47,12 +47,6 @@ void AInteractableDoor::BeginPlay()
 
 		UpdateConstraintLimits();
 	}
-}
-
-// Called every frame
-void AInteractableDoor::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
 }
 
 void AInteractableDoor::UpdateConstraintLimits()

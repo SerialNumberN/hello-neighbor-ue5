@@ -13,7 +13,7 @@
 // Sets default values
 AInteractableBearTrap::AInteractableBearTrap()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	// Setup visual mesh
 	TrapMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TrapMesh"));
@@ -42,12 +42,6 @@ void AInteractableBearTrap::BeginPlay()
 	{
 		TriggerBox->OnComponentBeginOverlap.AddDynamic(this, &AInteractableBearTrap::OnOverlapBegin);
 	}
-}
-
-// Called every frame
-void AInteractableBearTrap::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
 }
 
 void AInteractableBearTrap::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
