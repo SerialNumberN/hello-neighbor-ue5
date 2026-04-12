@@ -20,6 +20,9 @@ UInventoryComponent::UInventoryComponent()
 void UInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// Cache the camera component to avoid repeated FindComponentByClass calls
+	PlayerCamera = GetOwner()->FindComponentByClass<UCameraComponent>();
 }
 
 // Called every frame
@@ -96,7 +99,6 @@ void UInventoryComponent::DropActiveItem()
 	ItemToDrop->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 
 	// Calculate drop location (in front of the player's camera)
-	UCameraComponent* PlayerCamera = GetOwner()->FindComponentByClass<UCameraComponent>();
 	if (PlayerCamera)
 	{
 		FVector DropLocation = PlayerCamera->GetComponentLocation() + (PlayerCamera->GetForwardVector() * DropDistance);

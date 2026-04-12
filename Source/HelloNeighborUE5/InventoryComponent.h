@@ -6,6 +6,7 @@
 
 class AActor;
 class UPrimitiveComponent;
+class UCameraComponent;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class HELLONEIGHBORUE5_API UInventoryComponent : public UActorComponent
@@ -59,4 +60,8 @@ public:
 private:
 	// Helper to handle the physics/collision changes when an item enters/leaves the inventory
 	void SetItemActiveState(AActor* Item, bool bIsActive);
+
+	// Cached reference to the player's camera
+	UPROPERTY()
+	TObjectPtr<UCameraComponent> PlayerCamera;
 };
